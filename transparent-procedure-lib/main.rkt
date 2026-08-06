@@ -11,7 +11,9 @@
   [transparent-procedure?
    predicate/c]
   [procedure-includes?
-   (-> transparent-procedure? procedure? boolean?)]))
+   (-> transparent-procedure? procedure? boolean?)])
+ (rename-out
+  [NO-ARGUMENTS no-arguments]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
@@ -30,6 +32,9 @@
   (error 'dict-ref "no value found for key ~v" key))
 
 (define unq unquoted-printing-string)
+
+(struct no-arguments ())
+(define NO-ARGUMENTS (no-arguments))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; implementation
@@ -85,12 +90,20 @@
   #:methods gen:dict
   [(define (dict-ref self key [default (KEY-NOT-FOUND key)])
      (match-define (transparent-procedure proc tree) self)
-     (define-values (y idx) (tree-ref tree key))
-     (if idx
-         (match y
-           [(? contains-leaf? (app extract-at-leaf v)) v]
-           [_ (transparent-procedure (curry proc key) y)])
-         (if (procedure? default) (default) default)))
+     (define (failed)
+       (if (procedure? default) (default) default))
+     (cond
+       [(eq? key NO-ARGUMENTS)
+        (if (contains-leaf? tree)
+            (extract-at-leaf tree)
+            (failed))]
+       [else
+        (define-values (y idx) (tree-ref tree key))
+        (if idx
+            (match y
+              [(? contains-leaf? (app extract-at-leaf v)) v]
+              [_ (transparent-procedure (curry proc key) y)])
+            (failed))]))
 
    (define (dict-iterate-first self)
      (define tree (transparent-procedure-tree self))

@@ -232,6 +232,12 @@ the cached value is returned.
   Returns whether @racket[v] is a transparent procedure.
 }
 
+@defthing[no-arguments any/c]{
+  A sentinel value that,
+  when used with @racket[dict-ref] on a transparent procedure,
+  returns the value associated with a nullary function application.
+}
+
 @section{Prior Art}
 
 Higher-order memoization was first described by Ralf Hinze @cite{Hinze 2000}
