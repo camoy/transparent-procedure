@@ -94,6 +94,7 @@
      (match-define (transparent-procedure proc tree) self)
      (define (failed)
        (cond
+         [(eq? default KEYS-NOT-FOUND) (default keys)]
          [(procedure? default) (default)]
          [else default]))
      (let/cc return

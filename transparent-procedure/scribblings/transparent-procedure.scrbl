@@ -136,9 +136,7 @@ Transparent procedures are dictionaries
 that allow access to the partial graph.
 @examples[#:eval transparent-procedure-eval #:label #f
   (define (f x) (if (zero? x) 0 (add1 x)))
-  (define map′-curried (dict-ref map′ f))
-  map′-curried
-  (dict-ref map′-curried '(1 2 3))]
+  (dict-ref map′ (list f '(1 2 3)))]
 @margin-note{
   The nested structure of this dictionary makes it a trie
   where every argument is a "character."
@@ -147,12 +145,7 @@ Even though @racket[f] is not the same function as @racket[add1],
 the dictionary lookup is successful
 because it behaves extensionally the same
 as far as @racket[map′] is concerned.
-The @racket[dict-ref] function takes one argument at a time,
-leading to currying behavior.
-@examples[#:eval transparent-procedure-eval #:label #f
-  (eval:error (dict-ref map′-curried '(10 11 12)))
-  (map′ f '(10 11 12))
-  (dict-ref map′-curried '(10 11 12))]
+Note that the @racket[dict-ref] function takes a list of arguments.
 
 The partial graph of a pure function grows monotonically over time.
 Impure functions,
@@ -177,13 +170,10 @@ and then retrieving cached entries through the dictionary interface.
     (define absent (gensym))
     (λ args
       (let go ([g g] [args args])
-	(match args
-	  [(list) g]
-	  [(cons arg args-rest)
-	   (let ([g′ (dict-ref g arg absent)])
-	     (if (eq? g′ absent)
-		 (apply g args)
-		 (go g′ args-rest)))]))))]
+        (let ([result (dict-ref g args absent)])
+          (if (eq? result absent)
+              (apply g args)
+              result)))))]
 Here,
 @racket[g] is equivalent to the hash table of an ordinary memoization function.
 Upon application,
@@ -230,12 +220,6 @@ the cached value is returned.
 
 @defproc[(transparent-procedure? [v any/c]) boolean?]{
   Returns whether @racket[v] is a transparent procedure.
-}
-
-@defthing[no-arguments any/c]{
-  A sentinel value that,
-  when used with @racket[dict-ref] on a transparent procedure,
-  returns the value associated with a nullary function application.
 }
 
 @section{Prior Art}
